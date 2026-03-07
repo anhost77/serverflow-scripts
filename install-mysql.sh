@@ -1,5 +1,5 @@
 #!/bin/bash
-# ServerFlow - Install MariaDB
+# ServerFlow - Install MariaDB (secured)
 set -e
 
 if command -v mysql &> /dev/null; then
@@ -17,8 +17,11 @@ apt-get install -y mariadb-server mariadb-client
 systemctl enable mariadb
 systemctl start mariadb
 
-# Basic security
+# Security hardening (equivalent to mysql_secure_installation)
 mysql -e "DELETE FROM mysql.user WHERE User='';" 2>/dev/null || true
+mysql -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');" 2>/dev/null || true
+mysql -e "DROP DATABASE IF EXISTS test;" 2>/dev/null || true
+mysql -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';" 2>/dev/null || true
 mysql -e "FLUSH PRIVILEGES;" 2>/dev/null || true
 
-echo "✅ $(mysql --version) installed and running"
+echo "✅ $(mysql --version) installed and secured"
