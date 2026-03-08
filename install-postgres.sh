@@ -1,5 +1,5 @@
 #!/bin/bash
-# ServerFlow - Install PostgreSQL (secured)
+# ServerFlow - Install PostgreSQL
 set -e
 
 if command -v psql &> /dev/null; then
@@ -22,8 +22,5 @@ for i in {1..30}; do
   sudo -u postgres psql -c "SELECT 1" &>/dev/null && break
   sleep 1
 done
-
-# Security: listen only on localhost (default is fine)
-# pg_hba.conf defaults to local peer + md5 for TCP which is secure
 
 echo "✅ $(psql --version) installed and running"
