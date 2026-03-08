@@ -2,6 +2,9 @@
 # get-runtimes.sh - Detect installed runtimes
 # Output: JSON object with runtime status
 
+# Fix HOME for QEMU guest agent
+export HOME="${HOME:-/root}"
+
 json='{'
 
 # Node.js

@@ -4,6 +4,9 @@
 
 set -e
 
+# Fix HOME for QEMU guest agent
+export HOME="${HOME:-/root}"
+
 NAME="$1"
 REPO_URL="$2"
 BRANCH="${3:-main}"
