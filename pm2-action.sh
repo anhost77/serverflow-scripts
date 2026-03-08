@@ -52,6 +52,10 @@ case "$ACTION" in
       rm -f "$PM2_LOG_DIR/${APP_NAME}-"*.log 2>/dev/null || true
     fi
     
+    # Remove auto-update cron for this app
+    echo "Removing auto-update cron..."
+    crontab -l 2>/dev/null | grep -v "/srv/nodejs/${APP_NAME}" | crontab - 2>/dev/null || true
+    
     echo "App $APP_NAME completely removed"
     ;;
   *)

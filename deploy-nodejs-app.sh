@@ -114,6 +114,12 @@ fi
 # Save PM2 state
 pm2 save --force
 
+# Install auto-update cron (idempotent)
+echo "Setting up auto-update cron..."
+CRON_JOB="*/5 * * * * cd /srv/nodejs/${SAFE_NAME} && git fetch origin ${BRANCH} --quiet 2>/dev/null && git diff --quiet HEAD origin/${BRANCH} || (git pull origin ${BRANCH} && npm install --production --silent && pm2 restart ${SAFE_NAME} --update-env) >/dev/null 2>&1"
+(crontab -l 2>/dev/null | grep -v "/srv/nodejs/${SAFE_NAME}"; echo "$CRON_JOB") | crontab -
+echo "Auto-update cron installed (every 5 min)"
+
 echo ""
 echo "=== Deployment Complete ==="
 pm2 show "$SAFE_NAME" --no-color 2>/dev/null | head -20
