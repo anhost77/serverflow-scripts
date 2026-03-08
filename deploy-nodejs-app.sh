@@ -4,8 +4,9 @@
 
 set -e
 
-# Fix HOME for QEMU guest agent
+# Fix HOME/PM2_HOME for QEMU guest agent
 export HOME="${HOME:-/root}"
+export PM2_HOME="${PM2_HOME:-$HOME/.pm2}"
 
 NAME="$1"
 REPO_URL="$2"
