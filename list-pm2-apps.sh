@@ -2,6 +2,7 @@
 # list-pm2-apps.sh - List PM2 apps
 
 export HOME="${HOME:-/root}"
+export PM2_HOME="${PM2_HOME:-/root/.pm2}"
 
 # Check if PM2 is installed
 if ! command -v pm2 &>/dev/null; then
@@ -9,21 +10,8 @@ if ! command -v pm2 &>/dev/null; then
   exit 0
 fi
 
-# Try /etc/.pm2 first (legacy from QEMU without HOME), then /root/.pm2
-RESULT=""
+# Ensure PM2 daemon is running (connects to existing or starts new)
+pm2 ping >/dev/null 2>&1 || pm2 resurrect 2>/dev/null || true
 
-# Check /etc/.pm2
-if [ -d "/etc/.pm2" ]; then
-  export PM2_HOME="/etc/.pm2"
-  pm2 resurrect 2>/dev/null || true
-  RESULT=$(pm2 jlist 2>/dev/null)
-  if [ -n "$RESULT" ] && [ "$RESULT" != "[]" ]; then
-    echo "$RESULT"
-    exit 0
-  fi
-fi
-
-# Fallback to /root/.pm2
-export PM2_HOME="/root/.pm2"
-pm2 resurrect 2>/dev/null || true
+# Get JSON list
 pm2 jlist 2>/dev/null || echo "[]"
