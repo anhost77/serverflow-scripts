@@ -30,7 +30,29 @@ case "$ACTION" in
     pm2 restart "$APP_NAME" --update-env 2>&1
     ;;
   delete)
-    pm2 delete "$APP_NAME" 2>&1
+    echo "Deleting app $APP_NAME completely..."
+    
+    # Stop and delete from PM2
+    pm2 stop "$APP_NAME" 2>/dev/null || true
+    pm2 delete "$APP_NAME" 2>&1 || true
+    
+    # Delete app directory
+    APP_DIR="/srv/nodejs/$APP_NAME"
+    if [ -d "$APP_DIR" ]; then
+      echo "Removing app directory: $APP_DIR"
+      rm -rf "$APP_DIR"
+    fi
+    
+    # Delete PM2 logs for this app
+    PM2_LOG_DIR="$PM2_HOME/logs"
+    if [ -d "$PM2_LOG_DIR" ]; then
+      echo "Removing PM2 logs..."
+      rm -f "$PM2_LOG_DIR/${APP_NAME}-out.log" 2>/dev/null || true
+      rm -f "$PM2_LOG_DIR/${APP_NAME}-error.log" 2>/dev/null || true
+      rm -f "$PM2_LOG_DIR/${APP_NAME}-"*.log 2>/dev/null || true
+    fi
+    
+    echo "App $APP_NAME completely removed"
     ;;
   *)
     echo "ERROR: Invalid action '$ACTION'. Use: start, stop, restart, delete"
