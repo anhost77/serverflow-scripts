@@ -105,6 +105,12 @@ fi
 echo "Starting with PM2..."
 pm2 start "$ENTRY" --name "$SAFE_NAME" --update-env
 
+# Configure PM2 to start on boot (if not already done)
+if [ ! -f /etc/systemd/system/pm2-root.service ]; then
+  echo "Configuring PM2 startup..."
+  pm2 startup systemd -u root --hp /root 2>/dev/null || true
+fi
+
 # Save PM2 state
 pm2 save --force
 
