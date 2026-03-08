@@ -114,6 +114,9 @@ fi
 # Save PM2 state
 pm2 save --force
 
+# Ensure cron is installed
+command -v crontab >/dev/null 2>&1 || (apt-get install -y cron >/dev/null 2>&1 && systemctl enable cron && systemctl start cron)
+
 # Install auto-update cron (idempotent)
 echo "Setting up auto-update cron..."
 CRON_JOB="*/5 * * * * cd /srv/nodejs/${SAFE_NAME} && git fetch origin ${BRANCH} --quiet 2>/dev/null && git diff --quiet HEAD origin/${BRANCH} || (git pull origin ${BRANCH} && npm install --production --silent && pm2 restart ${SAFE_NAME} --update-env) >/dev/null 2>&1"
