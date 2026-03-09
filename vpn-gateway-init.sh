@@ -6,9 +6,9 @@
 LISTEN_PORT="${1:-51820}"
 SUBNET_PREFIX="${2:-10.100.1}"
 
-# Ensure WireGuard is installed
+# Ensure WireGuard and dependencies are installed
 apk update
-apk add wireguard-tools curl jq
+apk add wireguard-tools curl jq iptables
 
 # Create WireGuard directory
 mkdir -p /etc/wireguard
