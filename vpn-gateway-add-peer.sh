@@ -30,6 +30,10 @@ EOF
 # Apply config without restart (hot reload)
 wg set wg0 peer "${PEER_PUBKEY}" allowed-ips "${ALLOWED_IP}"
 
+# Add route for this peer (required because subnet exists on both eth0 and wg0)
+PEER_IP=$(echo "${ALLOWED_IP}" | cut -d'/' -f1)
+ip route add "${PEER_IP}/32" dev wg0 2>/dev/null || true
+
 # Get server's public IP (for client config)
 SERVER_ENDPOINT=$(curl -s ifconfig.me 2>/dev/null || echo "YOUR_SERVER_IP")
 
