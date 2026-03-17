@@ -63,13 +63,14 @@ accepts=""
 handled=""
 requests=""
 if [ "$nginx_running" = "true" ]; then
-    # Try to get from stub_status
-    stub_data=$(curl -s http://127.0.0.1/nginx_status 2>/dev/null || curl -s http://127.0.0.1:80/stub_status 2>/dev/null || echo "")
-    if [ -n "$stub_data" ]; then
-        active_connections=$(echo "$stub_data" | grep "Active" | awk "{print \$3}" || echo "")
-        accepts=$(echo "$stub_data" | awk "NR==3 {print \$1}" || echo "")
-        handled=$(echo "$stub_data" | awk "NR==3 {print \$2}" || echo "")
-        requests=$(echo "$stub_data" | awk "NR==3 {print \$3}" || echo "")
+    # Try to get from stub_status - validate it looks like nginx status output
+    stub_data=$(curl -s --max-time 2 http://127.0.0.1/nginx_status 2>/dev/null || curl -s --max-time 2 http://127.0.0.1:80/stub_status 2>/dev/null || echo "")
+    # Only parse if it contains "Active connections" (valid nginx status)
+    if echo "$stub_data" | grep -q "Active connections"; then
+        active_connections=$(echo "$stub_data" | grep "Active" | awk "{print \$3}" | tr -cd "0-9")
+        accepts=$(echo "$stub_data" | awk "NR==3 {print \$1}" | tr -cd "0-9")
+        handled=$(echo "$stub_data" | awk "NR==3 {print \$2}" | tr -cd "0-9")
+        requests=$(echo "$stub_data" | awk "NR==3 {print \$3}" | tr -cd "0-9")
     fi
 fi
 
@@ -89,9 +90,9 @@ if [ -f /var/log/nginx/error.log ]; then
     error_log_entries=$(tail -10 /var/log/nginx/error.log 2>/dev/null | grep "error\|crit\|alert\|emerg" | tail -5 | while read line; do echo "\"$(echo "$line" | sed "s/\"/\\\\\"/g" | cut -c1-200)\""; done | paste -sd "," -)
 fi
 
-# Port 80/443 listeners
-listening_80=$(ss -tlnp 2>/dev/null | grep ":80 " | head -1 | awk "{print \$NF}" || echo "none")
-listening_443=$(ss -tlnp 2>/dev/null | grep ":443 " | head -1 | awk "{print \$NF}" || echo "none")
+# Port 80/443 listeners - escape quotes for JSON
+listening_80=$(ss -tlnp 2>/dev/null | grep ":80 " | head -1 | awk "{print \$NF}" | sed "s/\"/\\\\\"/g" || echo "none")
+listening_443=$(ss -tlnp 2>/dev/null | grep ":443 " | head -1 | awk "{print \$NF}" | sed "s/\"/\\\\\"/g" || echo "none")
 
 # Output JSON
 cat << EOF

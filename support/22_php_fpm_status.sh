@@ -39,15 +39,21 @@ for service in php8.3-fpm php8.2-fpm php8.1-fpm php8.0-fpm php7.4-fpm php-fpm; d
 done
 
 # PHP-FPM pool configuration
-pool_config=""
+pool_config="{}"
 pool_files=$(find /etc/php -name "www.conf" 2>/dev/null | head -1)
-if [ -n "$pool_files" ]; then
+if [ -n "$pool_files" ] && [ -f "$pool_files" ]; then
     pm=$(grep "^pm = " "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "dynamic")
-    max_children=$(grep "^pm.max_children" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "5")
-    start_servers=$(grep "^pm.start_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "2")
-    min_spare=$(grep "^pm.min_spare_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "1")
-    max_spare=$(grep "^pm.max_spare_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "3")
-    max_requests=$(grep "^pm.max_requests" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | xargs || echo "0")
+    pm=${pm:-dynamic}
+    max_children=$(grep "^pm.max_children" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | tr -cd "0-9" || echo "5")
+    max_children=${max_children:-5}
+    start_servers=$(grep "^pm.start_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | tr -cd "0-9" || echo "2")
+    start_servers=${start_servers:-2}
+    min_spare=$(grep "^pm.min_spare_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | tr -cd "0-9" || echo "1")
+    min_spare=${min_spare:-1}
+    max_spare=$(grep "^pm.max_spare_servers" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | tr -cd "0-9" || echo "3")
+    max_spare=${max_spare:-3}
+    max_requests=$(grep "^pm.max_requests" "$pool_files" 2>/dev/null | awk -F= "{print \$2}" | tr -cd "0-9" || echo "0")
+    max_requests=${max_requests:-0}
     pool_config="{\"pm\":\"$pm\",\"max_children\":$max_children,\"start_servers\":$start_servers,\"min_spare\":$min_spare,\"max_spare\":$max_spare,\"max_requests\":$max_requests}"
 fi
 

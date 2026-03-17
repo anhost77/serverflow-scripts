@@ -98,8 +98,8 @@ if [ -n "$redis_pid" ] && [ "$redis_pid" != "0" ]; then
     redis_mem_mb=$((redis_mem_kb / 1024))
 fi
 
-# Port 6379 listener
-listening_6379=$(ss -tlnp 2>/dev/null | grep ":6379 " | awk "{print \$NF}" | head -1 || echo "none")
+# Port 6379 listener - escape quotes for JSON
+listening_6379=$(ss -tlnp 2>/dev/null | grep ":6379 " | awk "{print \$NF}" | head -1 | sed "s/\"/\\\\\"/g" || echo "none")
 
 # RDB/AOF persistence check
 persistence_rdb="false"
@@ -120,7 +120,9 @@ redis_errors=""
 error_count=0
 for log in /var/log/redis/redis-server.log /var/log/redis.log /var/log/redis/redis.log; do
     if [ -f "$log" ]; then
-        error_count=$(tail -100 "$log" 2>/dev/null | grep -ci "error\|warning\|fatal" || echo 0)
+        error_count=$(tail -100 "$log" 2>/dev/null | grep -ci "error\|warning\|fatal" 2>/dev/null || true)
+        error_count=${error_count:-0}
+        error_count=$((error_count + 0))
         redis_errors=$(tail -20 "$log" 2>/dev/null | grep -i "error\|warning" | tail -3 | while read line; do echo "\"$(echo "$line" | sed "s/\"/\\\\\"/g" | cut -c1-150)\""; done | paste -sd "," -)
         break
     fi
