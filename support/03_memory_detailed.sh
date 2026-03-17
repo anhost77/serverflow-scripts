@@ -42,7 +42,9 @@ while IFS= read -r line; do
 done < <(ps aux --sort=-rss | awk "NR>1 {printf \"%s %s %.0f %.1f %s\n\", \$2, \$1, \$6/1024, \$4, \$11}" | head -10)
 
 # Check for OOM killer activity (recent)
-oom_count=$(dmesg 2>/dev/null | grep -c "Out of memory" || echo 0)
+oom_count=$(dmesg 2>/dev/null | grep -c "Out of memory" 2>/dev/null || true)
+oom_count=${oom_count:-0}
+oom_count=$((oom_count + 0))
 oom_recent=""
 if [ "$oom_count" -gt 0 ]; then
     oom_recent=$(dmesg 2>/dev/null | grep "Out of memory" | tail -3 | while read line; do echo "\"$(echo "$line" | sed "s/\"/\\\\\"/g")\""; done | paste -sd "," -)
@@ -59,8 +61,8 @@ elif [ $(echo "$mem_percent > 60" | bc -l) -eq 1 ]; then
 fi
 
 # Check swap activity (vmstat)
-swap_in=$(vmstat 1 2 2>/dev/null | tail -1 | awk "{print \$7}" || echo 0)
-swap_out=$(vmstat 1 2 2>/dev/null | tail -1 | awk "{print \$8}" || echo 0)
+swap_in=$(vmstat 1 2 2>/dev/null | tail -1 | awk "{print \$7}" || echo "0")
+swap_out=$(vmstat 1 2 2>/dev/null | tail -1 | awk "{print \$8}" || echo "0")
 
 # Output JSON
 cat << EOF
@@ -88,7 +90,7 @@ cat << EOF
   },
   "top_memory_processes": [$mem_procs],
   "oom_killer": {
-    "recent_count": $oom_count,
+    "recent_count": $((oom_count + 0)),
     "recent_events": [${oom_recent:-}]
   }
 }

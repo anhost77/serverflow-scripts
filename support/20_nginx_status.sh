@@ -52,7 +52,9 @@ fi
 # Worker processes
 worker_count=0
 if [ "$nginx_running" = "true" ]; then
-    worker_count=$(pgrep -c "nginx: worker" 2>/dev/null || echo 0)
+    worker_count=$(pgrep -c "nginx: worker" 2>/dev/null || true)
+    worker_count=${worker_count:-0}
+    worker_count=$((worker_count + 0))
 fi
 
 # Active connections (from stub_status if available)
@@ -81,7 +83,9 @@ fi
 error_log_entries=""
 error_count=0
 if [ -f /var/log/nginx/error.log ]; then
-    error_count=$(tail -100 /var/log/nginx/error.log 2>/dev/null | grep -c "error\|crit\|alert\|emerg" || echo 0)
+    error_count=$(tail -100 /var/log/nginx/error.log 2>/dev/null | grep -c "error\|crit\|alert\|emerg" 2>/dev/null || true)
+    error_count=${error_count:-0}
+    error_count=$((error_count + 0))
     error_log_entries=$(tail -10 /var/log/nginx/error.log 2>/dev/null | grep "error\|crit\|alert\|emerg" | tail -5 | while read line; do echo "\"$(echo "$line" | sed "s/\"/\\\\\"/g" | cut -c1-200)\""; done | paste -sd "," -)
 fi
 
